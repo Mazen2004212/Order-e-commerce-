@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | Order System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      width: 100%;
+      max-width: 360px;
+      color: #fff;
+    }
+
+    .login-card h2 {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .login-card p {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #ccc;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    input, select {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .msg {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .forgot {
+      text-align: right;
+      font-size: 12px;
+      margin-bottom: 10px;
+      color: #aaa;
+    }
+
+    .forgot:hover {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    .footer a {
+      color: #00bfff;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h2>LOGIN</h2>
+    <p>Sign in to your account</p>
+    <input type="email" id="email" placeholder="Email address" />
+    <input type="password" id="password" placeholder="Password" />
+    <select id="role">
+      <option value="client">Client</option>
+      <option value="admin">Admin</option>
+    </select>
+    <div class="forgot">
+        <a href="forgot-password.html" style="color: #00bfff; text-decoration: none;">Forgot password?</a>
+      </div>      
+    <button onclick="login()">Sign in</button>
+    <div class="msg" id="msg"></div>
+    <div class="footer">Don’t have an account? <a href="signup.html">Sign up</a></div>
+  </div>
+
+  <script>
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const msg = document.getElementById("msg");
+
+      try {
+        const response = await fetch("http://localhost:3005/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, role })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          msg.style.color = "lightgreen";
+          msg.innerText = "Login successful! Redirecting...";
+
+          if (role === "admin") {
+            window.location.href = "/admin-dashboard.html";
+          } else {
+            window.location.href = "/client-home.html";
+          }
+        } else {
+          msg.style.color = "red";
+          msg.innerText = data.message || "Login failed.";
+        }
+      } catch (error) {
+        msg.style.color = "red";
+        msg.innerText = "Network error or server not reachable.";
+      }
+    }
+  </script>
+</body>
+</html>

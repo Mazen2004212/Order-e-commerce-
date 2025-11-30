@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "3005:3005"
+
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  order-service:
+    build: ./order-service
+    depends_on:
+      - kafka
+    ports:
+      - "3001:3001"
+
+  payment-service:
+    build: ./payment-service
+    depends_on:
+      - kafka
+
+  packing-service:
+    build: ./packing-service
+    depends_on:
+      - kafka
+
+  shipping-service:
+    build: ./shipping-service
+    depends_on:
+      - kafka
+
+  delivery-service:
+    build: ./delivery-service
+    depends_on:
+      - kafka
+
+  notification-service:
+    build: ./notification-service
+    depends_on:
+      - kafka
+
+  mongodb:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

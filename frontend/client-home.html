@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Client Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 450px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 25px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .msg {
+      margin-top: 15px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 500px) {
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👤 Place an Order</h1>
+     <form id="orderForm">
+      <input type="number" id="id" placeholder="Order ID" required />
+      <input type="number" id="customerId" placeholder="Customer ID" required />
+      <textarea id="items" placeholder="Enter items separated by commas" rows="4" required></textarea>
+      <button type="submit">🛒 Submit Order</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    form.addEventListener("submit", submitOrder);
+
+    async function submitOrder(e) {
+      e.preventDefault();
+
+      const id = document.getElementById("id").value;
+      const customerId = document.getElementById("customerId").value;
+      const items = document.getElementById("items").value.split(",").map(item => item.trim());
+      const msg = document.getElementById("msg");
+
+      console.log("📤 Sending order:", { id, customerId, items });
+
+      try {
+        const res = await fetch("http://127.0.0.1:3001/place-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, customerId, items })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.innerHTML = `✅ Order placed successfully!<br><a href="track-order.html?id=${id}">🔍 Track it here</a>`;
+          msg.style.color = "green";
+        } else {
+          msg.innerText = `❌ Failed to place order: ${data.message || res.status}`;
+          msg.style.color = "red";
+        }
+      } catch (error) {
+        msg.innerText = `❌ Network error: ${error.message}`;
+        msg.style.color = "red";
+        console.error("Network error:", error);
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

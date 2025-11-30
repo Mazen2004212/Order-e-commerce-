@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign Up | Order System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .signup-card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .signup-card h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .password-container input {
+      padding-right: 42px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      height: 24px;
+      width: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle-password svg {
+      fill: #555;
+    }
+
+    button[type="submit"] {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+
+    .back-btn {
+      background-color: transparent;
+      color: #007bff;
+      border: 2px solid #007bff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      margin: 15px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: 0.3s ease;
+      cursor: pointer;
+    }
+
+    .back-btn svg {
+      transition: transform 0.3s ease;
+      fill: #061c34;
+    }
+
+    .back-btn:hover {
+      background-color: #0a3b6e;
+      color: white;
+    }
+
+    .back-btn:hover svg {
+      transform: translateX(-3px);
+      fill: white;
+    }
+
+    .msg {
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-card">
+    <h2>Create Your Account</h2>
+    <form onsubmit="signup(event)">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email Address" required />
+
+      <div class="password-container">
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="button" class="toggle-password" onclick="togglePassword()">
+          <!-- Eye SVG Icon -->
+          <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+            <circle cx="12" cy="12" r="2.5"/>
+          </svg>
+        </button>
+      </div>
+
+      <select id="role" required>
+        <option value="" disabled selected>Select Role</option>
+        <option value="client">Client</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <button type="submit" id="signupBtn">Sign Up</button>
+
+      <button type="button" class="back-btn" onclick="goBack()">
+        <!-- Left Arrow SVG Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+        </svg>
+        Back to Login
+      </button>
+
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <script>
+    let passwordVisible = false;
+
+    function togglePassword() {
+      const passwordInput = document.getElementById("password");
+      passwordVisible = !passwordVisible;
+      passwordInput.type = passwordVisible ? "text" : "password";
+    }
+
+    function goBack() {
+      window.location.href = "login.html";
+    }
+
+    async function signup(e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const passwordInput = document.getElementById("password");
+      const password = passwordInput.value;
+      const role = document.getElementById("role").value;
+      const msg = document.getElementById("msg");
+      const signupBtn = document.getElementById("signupBtn");
+
+      signupBtn.disabled = true;
+      msg.innerText = "";
+
+      try {
+        const res = await fetch("http://localhost:3005/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, role })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          msg.innerText = "✅ Account created successfully!";
+          msg.style.color = "green";
+
+          // تفريغ الحقول
+          document.getElementById("name").value = "";
+          document.getElementById("email").value = "";
+          passwordInput.value = "";
+          passwordInput.type = "password";
+          document.getElementById("role").value = "";
+          passwordVisible = false;
+
+          // تحويل تلقائي بعد 1.5 ثانية
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500);
+        } else {
+          msg.innerText = `❌ ${data.error || "Signup failed."}`;
+          msg.style.color = "red";
+        }
+      } catch (error) {
+        msg.innerText = "❌ Network error.";
+        msg.style.color = "red";
+      } finally {
+        signupBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #121212;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #00bcd4;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #1e1e2f;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      text-align: left;
+    }
+    th {
+      background: #00bcd4;
+    }
+    select, button {
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+      font-size: 14px;
+    }
+    select {
+      background-color: #2b2b40;
+      color: white;
+    }
+    .btn-save {
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    .btn-save:hover {
+      background: #0056b3;
+    }
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+      cursor: pointer;
+    }
+    .btn-delete:hover {
+      background: #b02a37;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 20px;
+      color: #aaa;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+
+      td {
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #333;
+      }
+
+      tr {
+        margin-bottom: 15px;
+        background-color: #2a2a3d;
+        border-radius: 6px;
+      }
+
+      td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #00bcd4;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>👑 Admin Dashboard</h1>
+  <div class="loading" id="loading">🔄 Loading orders...</div>
+  <table id="ordersTable" style="display: none;">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Customer ID</th>
+        <th>Items</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let ordersData = [];
+
+    async function loadOrders() {
+      const loading = document.getElementById("loading");
+      const table = document.getElementById("ordersTable");
+      const tbody = table.querySelector("tbody");
+
+      try {
+        const res = await fetch("http://localhost:3001/orders");
+        const data = await res.json();
+        ordersData = data;
+
+        if (data.length === 0) {
+          loading.innerText = "📭 No orders yet.";
+          table.style.display = "none";
+          return;
+        }
+
+        tbody.innerHTML = "";
+
+        data.forEach((order, index) => {
+          const status = order.status || "Pending";
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td data-label="Order ID">${order.id}</td>
+            <td data-label="Customer ID">${order.customerId}</td>
+            <td data-label="Items">${Array.isArray(order.items) ? order.items.join(", ") : order.items}</td>
+            <td data-label="Status">
+              <select id="status-${index}">
+                ${["Pending", "Paid", "Packed", "Shipped", "Delivered"].map(s =>
+                  `<option value="${s}" ${s === status ? "selected" : ""}>${s}</option>`
+                ).join("")}
+              </select>
+            </td>
+            <td data-label="Actions">
+              <button class="btn-save" onclick="updateStatus(${index})">Save</button>
+              <button class="btn-delete" onclick="deleteOrder(${index})">Delete</button>
+            </td>
+          `;
+
+          tbody.appendChild(row);
+        });
+
+        loading.style.display = "none";
+        table.style.display = "table";
+      } catch (error) {
+        loading.innerText = "❌ Failed to load orders.";
+        console.error("Error fetching orders:", error);
+      }
+    }
+
+    async function updateStatus(index) {
+  const order = ordersData[index];
+  const newStatus = document.getElementById(`status-${index}`).value;
+  const saveBtn = document.querySelectorAll(".btn-save")[index];
+  const originalText = saveBtn.innerText;
+
+  // تعطيل الزر مؤقتًا
+  saveBtn.innerText = "⏳ Saving...";
+  saveBtn.disabled = true;
+
+  try {
+    const res = await fetch("http://localhost:3001/update-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: order.id, status: newStatus })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      ordersData[index].status = newStatus;
+      saveBtn.innerText = "✅ Saved";
+      setTimeout(() => {
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+      }, 1500);
+    } else {
+      saveBtn.innerText = "❌ Failed";
+      setTimeout(() => {
+        saveBtn.innerText = originalText;
+        saveBtn.disabled = false;
+      }, 2000);
+      alert(`❌ Failed to update: ${data.message}`);
+    }
+  } catch (error) {
+    console.error("Update error:", error);
+    saveBtn.innerText = "⚠️ Error";
+    setTimeout(() => {
+      saveBtn.innerText = originalText;
+      saveBtn.disabled = false;
+    }, 2000);
+    alert("❌ Network error while updating.");
+  }
+}
+
+
+    async function deleteOrder(index) {
+      const orderId = ordersData[index].id;
+
+      const confirmDelete = confirm(`هل أنت متأكد من حذف الطلب #${orderId}؟`);
+      if (!confirmDelete) return;
+
+      try {
+        const res = await fetch(`http://localhost:3001/order/${orderId}`, {
+          method: "DELETE"
+        });
+
+        if (res.ok) {
+          alert(`🗑️ Order #${orderId} deleted successfully.`);
+          loadOrders();
+        } else {
+          alert("❌ Failed to delete order.");
+        }
+      } catch (error) {
+        console.error("Delete error:", error);
+        alert("❌ Network error while deleting.");
+      }
+    }
+
+    loadOrders();
+    setInterval(loadOrders, 10000); // تحديث كل 10 ثواني
+  </script>
+</body>
+</html>
